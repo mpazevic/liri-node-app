@@ -106,6 +106,7 @@ function imdbString() {
 	}
 };
 
+//Format RT string correctly for use in the API
 function RTString() {
 	return imdbString().toLowerCase().replace(/\s+/g,"_").replace(".", "");
 }
