@@ -11,6 +11,8 @@ var moment = require("moment");
 var spotify = require("spotify");
 //Include Request 
 var request = require("request");
+//Include fs
+var fs = require("fs");
 //END PRIMARY VARIABLES___________________________________________________________________________
 
 //Main liri function--immediately invoked upon entering a command
@@ -39,21 +41,43 @@ var request = require("request");
 		var request = require('request');
 		var movieName = imdbString();
 		let queryString = 'http://www.omdbapi.com/?' + "&t=" + movieName
-		var rottenTomatoesURL = 'https://www.rottentomatoes.com/m/' + RTString();
+		var rottenTomatoesURL = 'https://www.rottentomatoes.com/search/?search=' + RTString();
 		request( queryString, function (error, response, body) {
 			if (error) {
 				console.log('error:', error); // Print the error if one occurred 
 			};
 			//Make the returned data into a JSON object 
 			var parsedBody = JSON.parse(body);
-			console.log("\n" + "Movie Title: " + parsedBody.Title + "\n" + "Year Released: " + parsedBody.Year + "\n" + 
+			try {
+				console.log("\n" + "Movie Title: " + parsedBody.Title + "\n" + "Year Released: " + parsedBody.Year + "\n" + 
 				"IMDB rating: " + parsedBody.Ratings[0].Value + "\n" + "Country(ies) Produced In: " + parsedBody.Country + "\n" + 
-				"Language: " + parsedBody.Language + "\n" + "Plot: " + parsedBody.Plot + "\n" +
+				"Language(s): " + parsedBody.Language + "\n" + "Plot: " + parsedBody.Plot + "\n" +
 				"Actors: " + parsedBody.Actors + "\n" + "Rotten Tomatoes Rating: " +
-				parsedBody.Ratings[1].Value + "\n" + "Rotten Tomatoes URL: " + rottenTomatoesURL + "\n"
-			);
+				parsedBody.Ratings[1].Value + "\n" + "Rotten Tomatoes URL: " + rottenTomatoesURL + "\n");
+			} catch(err) {
+				console.log("\n" + parsedBody.Error);
+				console.log("Try entering the title of the film EXACTLY as it appears!" + "\n" + 
+					"(Watch for colons, dashes, roman numerals vs. numbers, etc.)" + "\n"
+				);
+			};
 		});
-	}
+	};
+
+	if (process.argv[2] === "do-what-it-says") {
+		fs.readFile("./random.txt", "utf8", function(err, data) {
+			if (err) {
+				throw err;
+			};
+
+			var commandAndQuery = data.split(",");
+			process.argv[2] = commandAndQuery[0];
+			process.argv[3] = commandAndQuery[1];
+			liri();
+		});
+
+		logData();
+	};
+
 })();
 
 //SPOTIFY______________________________________________________________________________
@@ -92,7 +116,7 @@ function spotifySearch() {
 }
 //END SPOTIFY_______________________________________________________________________________
 
-//IMDB FUNCTIONS____________________________________________________________________________
+//IMDB____________________________________________________________________________
 function imdbString() {
 	var queryString = '';
 	for (var i = 3; i < (process.argv).length; i++) {
@@ -108,11 +132,27 @@ function imdbString() {
 
 //Format RT string correctly for use in the API
 function RTString() {
-	return imdbString().toLowerCase().replace(/\s+/g,"_").replace(".", "");
+	return imdbString().toLowerCase().replace(/\s+/g,"%20").replace(/,/g, "%2C").replace(/:/g, "%3A");
 }
-//END IMDB FUNCTIONS________________________________________________________________________
+//END IMDB________________________________________________________________________
 
+// //LOGGING DATA TO LOG.TXT
+// function logData() {
+// 	fs.appendFile("log.txt", "hello", function(err) {
+// 		if (err) throw err;
+// 		console.log("The data got appended to the file");
+// 	})
+// };
 
+// // function process() {
+// // 	var processString = '';
+// // 	for (var i = 0; i < (process.argv).length; i++) {
+// // 		processString += process.argv[i];
+// // 	};
+
+// // 	return processString.trim();
+// // }
+// // //END LOG
 
 
 
