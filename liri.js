@@ -98,7 +98,7 @@ var liriObject = {
 
 	//Format RT string correctly for use in the API
 	RTString: function() {
-		return liriObject.imdbString().toLowerCase().replace(/\s+/g,"%20").replace(/,/g, "%2C").replace(/:/g, "%3A");
+		return liriObject.imdbString().toLowerCase().replace(/\s+/g,"%20").replace(/,/g, "%2C").replace(/:/g, "%3A").replace(/\+/g, "");
 	},
 
 	movieThis: function() {
@@ -111,19 +111,31 @@ var liriObject = {
 			};
 			//Make the returned data into a JSON object 
 			var parsedBody = JSON.parse(body);
-			//See if the movie title exists and print facts about it if true.
-			//If false, return a specific error message
-			try {
-				console.log("\n" + "Movie Title: " + parsedBody.Title + "\n" + "Year Released: " + parsedBody.Year + "\n" + 
-				"IMDB rating: " + parsedBody.Ratings[0].Value + "\n" + "Country(ies) Produced In: " + parsedBody.Country + "\n" + 
-				"Language(s): " + parsedBody.Language + "\n" + "Plot: " + parsedBody.Plot + "\n" +
-				"Actors: " + parsedBody.Actors + "\n" + "Rotten Tomatoes Rating: " +
-				parsedBody.Ratings[1].Value + "\n" + "Rotten Tomatoes URL: " + rottenTomatoesURL + "\n");
-			} catch(err) {
-				console.log("\n" + parsedBody.Error);
-				console.log("Try entering the title of the film EXACTLY as it appears!" + "\n" + 
-					"(Watch for colons, dashes, roman numerals vs. numbers, etc.)" + "\n"
-				);
+			if (parsedBody.Response === 'False' || parsedBody.Response === 'True') {
+				//See if the movie title exists and print facts about it if true.
+				//If false, return a specific error message
+				try {
+					//If not covered by Rotten Tomatoes, exclude the Rotten Tomatoes factor to avoid error
+					//and return other movie facts
+					if (parsedBody.Ratings[1] === undefined) {
+						return console.log("\n" + "Rotten Tomatoes not available for this film! Sorry!" + "\n" + "\n" + "Movie Title: " + parsedBody.Title + "\n" + "Year Released: " + parsedBody.Year + "\n" + 
+						"IMDB rating: " + parsedBody.Ratings[0].Value + "\n" + "Country(ies) Produced In: " + parsedBody.Country + "\n" + 
+						"Language(s): " + parsedBody.Language + "\n" + "Plot: " + parsedBody.Plot + "\n");
+					};
+					//Otherwise, record results of imdb API call
+					console.log("\n" + "Movie Title: " + parsedBody.Title + "\n" + "Year Released: " + parsedBody.Year + "\n" + 
+					"IMDB rating: " + parsedBody.Ratings[0].Value + "\n" + "Country(ies) Produced In: " + parsedBody.Country + "\n" + 
+					"Language(s): " + parsedBody.Language + "\n" + "Plot: " + parsedBody.Plot + "\n" +
+					"Actors: " + parsedBody.Actors + "\n" + "Rotten Tomatoes Rating: " +
+					parsedBody.Ratings[1].Value + "\n" + "Rotten Tomatoes URL: " + rottenTomatoesURL + "\n");
+				} 
+				//However, if no information is given whatsover, return an error
+				catch(err) { 
+					console.log("\n" + parsedBody.Error);
+					console.log("Try entering the title of the film EXACTLY as it appears!" + "\n" + 
+						"(Watch for colons, dashes, roman numerals vs. numbers, etc.)" + "\n"
+					);
+				};
 			};
 		});
 	},
